@@ -5,48 +5,46 @@ import {
   EnvValue,
   GeneratorConfig
 } from '@prisma/generator-helper/dist';
+import { valueIs } from './utils';
 
-const handlers = (type: any, kind: any) => {
+// Render an individual field attribute
+const renderAttribute = (kind: DMMF.FieldKind) => {
   return {
     default: (value: any) => {
-      if (kind === 'enum') return `@default(${value})`;
-      if (type === 'Boolean') return `@default(${value})`;
       if (!value) return '';
+      if (typeof value == 'string') value = `"${value}"`;
+
+      if (valueIs(value, [Number, String, Boolean]) || kind === 'enum') return `@default(${value})`;
+
       if (typeof value === 'object') return `@default(${value.name}(${value.args}))`;
-      if (typeof value === 'number') return `@default(${value})`;
-      if (typeof value === 'string') return `@default("${value}")`;
-      throw new Error(`Unsupported field attribute ${value}`);
+
+      throw new Error(`Prismix: Unsupported field attribute ${value}`);
     },
     isId: (value: any) => (value ? '@id' : ''),
     isUnique: (value: any) => (value ? '@unique' : ''),
-    dbNames: (value: any) => {},
-    relationToFields: (value: any) => {},
-    relationOnDelete: (value: any) => {},
-    hasDefaultValue: (value: any) => {},
-    relationName: (value: any) => {},
-    documentation: (value: any) => {},
-    isReadOnly: (value: any) => {},
-    isGenerated: (value: any) => {},
     isUpdatedAt: (value: any) => (value ? '@updatedAt' : ''),
     columnName: (value: any) => (value ? `@map("${value}")` : '')
   };
 };
 
-function handleAttributes(attributes: DMMF.Field, kind: DMMF.FieldKind, type: string) {
+// Render a line of field attributes
+function renderAttributes(attributes: DMMF.Field, kind: DMMF.FieldKind): string {
   const { relationFromFields, relationToFields, relationName } = attributes;
 
+  // handle attributes for scalar and enum fields
   if (kind == 'scalar' || kind == 'enum') {
     return `${Object.keys(attributes)
-      .map((each) => {
-        const func = handlers(type, kind)[each];
-        if (typeof func == 'function') return func(attributes[each]);
+      .map((name) => {
+        const func = renderAttribute(kind)[name];
+        if (typeof func == 'function') return func(attributes[name]);
         else return false;
       })
       .filter((x) => !!x)
       .join(' ')}`;
   }
 
-  if (kind === 'object' && relationFromFields) {
+  // handle @relation syntax
+  if (relationFromFields && kind === 'object') {
     return relationFromFields.length > 0
       ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}])`
       : `@relation(name: "${relationName}")`;
@@ -55,57 +53,83 @@ function handleAttributes(attributes: DMMF.Field, kind: DMMF.FieldKind, type: st
   return '';
 }
 
-function handleFields(fields: DMMF.Field[]): string[] {
+// render all fields present on a model
+function renderModelFields(fields: DMMF.Field[]): string[] {
   return fields.map((field) => {
     const { name, kind, type, isRequired, isList } = field;
 
-    if (kind == 'scalar') {
-      return `${name} ${type}${isRequired ? '' : '?'} ${handleAttributes(field, kind, type)}`;
-    }
+    if (kind == 'scalar')
+      return `${name} ${type}${isRequired ? '' : '?'} ${renderAttributes(field, kind)}`;
 
-    if (kind == 'object' || kind == 'enum') {
-      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${handleAttributes(
+    if (kind == 'object' || kind == 'enum')
+      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(
         field,
-        kind,
-        type
+        kind
       )}`;
-    }
 
     throw new Error(`Prismix: Unsupported field kind "${kind}"`);
   });
 }
 
-function assembleBlock(type: string, name: string, things: string[]) {
+function renderIdFields(idFields: string[]): string {
+  return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
+}
+function renderUniqueFields(uniqueFields: string[][]): string[] {
+  return uniqueFields.length > 0
+    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`)
+    : [];
+}
+function renderDbName(dbName: string | null): string {
+  return dbName ? `@@map("${dbName}")` : '';
+}
+function renderUrl(envValue: EnvValue): string {
+  const value = envValue.fromEnvVar ? `env("${envValue.fromEnvVar}")` : envValue.value;
+
+  return `url = "${value}"`;
+}
+function renderProvider(provider: ConnectorType | string): string {
+  return `provider = "${provider}"`;
+}
+function renderOutput(path: string | null): string {
+  return path ? `output = "${path}"` : '';
+}
+function renderBinaryTargets(binaryTargets?: string[]): string {
+  return binaryTargets?.length ? `binaryTargets = ${JSON.stringify(binaryTargets)}` : '';
+}
+function renderPreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures']): string {
+  return previewFeatures.length ? `previewFeatures = ${JSON.stringify(previewFeatures)}` : '';
+}
+
+// This function will render a code block with suitable indenting
+function renderBlock(type: string, name: string, things: string[]): string {
   return `${type} ${name} {\n${things
     .filter((thing) => thing.length > 1)
     .map((thing) => `\t${thing}`)
     .join('\n')}\n}`;
 }
 
-function deserializeModel(model: DMMF.Model) {
+function deserializeModel(model: DMMF.Model): string {
   const { name, fields, uniqueFields, dbName, idFields } = model;
-
-  return assembleBlock('model', name, [
-    ...handleFields(fields),
-    ...handleUniqueFields(uniqueFields),
-    handleDbName(dbName),
-    handleIdFields(idFields)
+  return renderBlock('model', name, [
+    ...renderModelFields(fields),
+    ...renderUniqueFields(uniqueFields),
+    renderDbName(dbName),
+    renderIdFields(idFields)
   ]);
 }
 
-function deserializeDatasource(datasource: DataSource) {
+function deserializeDatasource(datasource: DataSource): string {
   const { activeProvider: provider, name, url } = datasource;
-  return assembleBlock('datasource', name, [handleProvider(provider), handleUrl(url)]);
+  return renderBlock('datasource', name, [renderProvider(provider), renderUrl(url)]);
 }
 
-function deserializeGenerator(generator: GeneratorConfig) {
+function deserializeGenerator(generator: GeneratorConfig): string {
   const { binaryTargets, name, output, provider, previewFeatures } = generator;
-
-  return assembleBlock('generator', name, [
-    handleProvider(provider.value),
-    handleOutput(output?.value || null),
-    handleBinaryTargets(binaryTargets as unknown as string[]),
-    handlePreviewFeatures(previewFeatures)
+  return renderBlock('generator', name, [
+    renderProvider(provider.value),
+    renderOutput(output?.value || null),
+    renderBinaryTargets(binaryTargets as unknown as string[]),
+    renderPreviewFeatures(previewFeatures)
   ]);
 }
 
@@ -115,58 +139,21 @@ function deserializeEnum({ name, values, dbName }: DMMF.DatamodelEnum) {
     if (name !== dbName && dbName) result += `@map("${dbName}")`;
     return result;
   });
-  return assembleBlock('enum', name, [...outputValues, handleDbName(dbName || null)]);
+  return renderBlock('enum', name, [...outputValues, renderDbName(dbName || null)]);
 }
 
-function handleIdFields(idFields: string[]) {
-  return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
-}
-
-function handleUniqueFields(uniqueFields: string[][]): string[] {
-  return uniqueFields.length > 0
-    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`)
-    : [];
-}
-
-function handleDbName(dbName: string | null) {
-  return dbName ? `@@map("${dbName}")` : '';
-}
-
-function handleUrl(envValue: EnvValue) {
-  const value = envValue.fromEnvVar ? `env("${envValue.fromEnvVar}")` : envValue.value;
-
-  return `url = "${value}"`;
-}
-
-function handleProvider(provider: ConnectorType | string) {
-  return `provider = "${provider}"`;
-}
-
-function handleOutput(path: string | null) {
-  return path ? `output = "${path}"` : '';
-}
-
-function handleBinaryTargets(binaryTargets?: string[]) {
-  return binaryTargets?.length ? `binaryTargets = ${JSON.stringify(binaryTargets)}` : '';
-}
-
-function handlePreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures']) {
-  return previewFeatures.length ? `previewFeatures = ${JSON.stringify(previewFeatures)}` : '';
-}
-
+// Exportable methods
 export async function deserializeModels(models: DMMF.Model[]) {
   return models.map((model) => deserializeModel(model)).join('\n');
 }
-
 export async function deserializeDatasources(datasources: DataSource[]) {
   return datasources.map((datasource) => deserializeDatasource(datasource)).join('\n');
 }
-
 export async function deserializeGenerators(generators: GeneratorConfig[]) {
   return generators.map((generator) => deserializeGenerator(generator)).join('\n');
 }
-
 export async function deserializeEnums(enums: DMMF.DatamodelEnum[]) {
   return enums.map((each) => deserializeEnum(each)).join('\n');
 }
+
 // Adapted from https://github.com/IBM/prisma-schema-transformer/blob/53a173185b/src/deserializer.ts
