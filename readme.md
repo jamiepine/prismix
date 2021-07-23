@@ -66,7 +66,7 @@ model Account {
 ## `posts.prisma`
 Now we'll create the Posts schema in a different file. In order for posts to relate to accounts we can define an empty model to represent the account.
 
-```
+```prisma
 model Posts {
     id         Int     @id @default(autoincrement())
     title      String
@@ -87,7 +87,7 @@ When Prismix merges these two schemas the relations will be connected.
 ## `schema.prisma`
 This is the generated file
 
-```
+```prisma
 generator client {
     provider = "prisma-client-js"
 }
