@@ -13,11 +13,11 @@ const renderAttribute = (field: DMMF.Field) => {
   return {
     default: (value: any) => {
       if (!value) return '';
-
+      // convert value to a string, only if kind is scalar and NOT a BigInt
       if (kind === 'scalar' && type !== 'BigInt' && typeof value == 'string') value = `"${value}"`;
-
+      // if number, string or boolean we are ready to return!
       if (valueIs(value, [Number, String, Boolean]) || kind === 'enum') return `@default(${value})`;
-
+      // haven't yet found where this is actually useful — will get back on that
       if (typeof value === 'object') return `@default(${value.name}(${value.args}))`;
 
       throw new Error(`Prismix: Unsupported field attribute ${value}`);
@@ -32,26 +32,24 @@ const renderAttribute = (field: DMMF.Field) => {
 // Render a line of field attributes
 function renderAttributes(field: DMMF.Field): string {
   const { relationFromFields, relationToFields, relationName, kind } = field;
-
   // handle attributes for scalar and enum fields
   if (kind == 'scalar' || kind == 'enum') {
     return `${Object.keys(field)
-      .map((name) => {
-        const func = renderAttribute(field)[name];
-        if (typeof func == 'function') return func(field[name]);
-        else return false;
-      })
+      // if we have a method defined above with that property, call the method
+      .map(
+        (property) =>
+          renderAttribute(field)[property] && renderAttribute(field)[property](field[property])
+      )
+      // filter out empty strings
       .filter((x) => !!x)
       .join(' ')}`;
   }
-
-  // handle @relation syntax
+  // handle relation syntax
   if (relationFromFields && kind === 'object') {
     return relationFromFields.length > 0
       ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}])`
       : `@relation(name: "${relationName}")`;
   }
-
   return '';
 }
 
