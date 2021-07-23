@@ -1,0 +1,9 @@
+{
+  "name": "prismix",
+  "version": "1.0.0",
+  "description": "A Prisma schema mixer",
+  "main": "dist/index.js",
+  "author": "Jamie Pine",
+  "license": "MIT",
+  "private": false
+}
