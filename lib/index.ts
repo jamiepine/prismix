@@ -16,7 +16,7 @@ class Prismix extends Command {
   };
 
   async run() {
-    this.log(``);
+    this.log(`Prismix: Mixing your schemas... 🍜`);
     // const { flags } = this.parse(Prismix)
 
     const options: PrismixOptions = (await readJsonFile(
