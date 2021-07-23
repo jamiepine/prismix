@@ -8,11 +8,13 @@ import {
 import { valueIs } from './utils';
 
 // Render an individual field attribute
-const renderAttribute = (kind: DMMF.FieldKind) => {
+const renderAttribute = (field: DMMF.Field) => {
+  const { kind, type } = field;
   return {
     default: (value: any) => {
       if (!value) return '';
-      if (typeof value == 'string') value = `"${value}"`;
+
+      if (kind === 'scalar' && type !== 'BigInt' && typeof value == 'string') value = `"${value}"`;
 
       if (valueIs(value, [Number, String, Boolean]) || kind === 'enum') return `@default(${value})`;
 
@@ -28,15 +30,15 @@ const renderAttribute = (kind: DMMF.FieldKind) => {
 };
 
 // Render a line of field attributes
-function renderAttributes(attributes: DMMF.Field, kind: DMMF.FieldKind): string {
-  const { relationFromFields, relationToFields, relationName } = attributes;
+function renderAttributes(field: DMMF.Field): string {
+  const { relationFromFields, relationToFields, relationName, kind } = field;
 
   // handle attributes for scalar and enum fields
   if (kind == 'scalar' || kind == 'enum') {
-    return `${Object.keys(attributes)
+    return `${Object.keys(field)
       .map((name) => {
-        const func = renderAttribute(kind)[name];
-        if (typeof func == 'function') return func(attributes[name]);
+        const func = renderAttribute(field)[name];
+        if (typeof func == 'function') return func(field[name]);
         else return false;
       })
       .filter((x) => !!x)
@@ -59,13 +61,10 @@ function renderModelFields(fields: DMMF.Field[]): string[] {
     const { name, kind, type, isRequired, isList } = field;
 
     if (kind == 'scalar')
-      return `${name} ${type}${isRequired ? '' : '?'} ${renderAttributes(field, kind)}`;
+      return `${name} ${type}${isRequired ? '' : '?'} ${renderAttributes(field)}`;
 
     if (kind == 'object' || kind == 'enum')
-      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(
-        field,
-        kind
-      )}`;
+      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(field)}`;
 
     throw new Error(`Prismix: Unsupported field kind "${kind}"`);
   });
