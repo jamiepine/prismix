@@ -38,10 +38,11 @@ yarn add prismix
 ```
 
 ## Example
+Let's go over how Prismix merges schemas. We'll keep it simple here and start with two schemas, but they need to relate to each other.
 
-`base.prisma`
+## `base.prisma`
 
-This is the 
+
 ```prisma
 generator client {
     provider = "prisma-client-js"
@@ -53,9 +54,66 @@ datasource db {
 }
 
 model Account {
-    id   Int  @id @default(autoincrement())
-    plan Plan
+    id       Int    @id @default(autoincrement())
+    username String
+    email    String
+    status   String
 
     @@map("accounts")
 }
 ```
+
+## `posts.prisma`
+Now we'll create the Posts schema in a different file. In order for posts to relate to accounts we can define an empty model to represent the account.
+
+```
+model Posts {
+    id         Int     @id @default(autoincrement())
+    title      String
+    content    String
+    account_id Int
+    account    Account @relation(fields: [account_id], references: [id])
+
+    @@map("posts")
+}
+
+model Account {
+    id     String
+    posts: Post[]
+}
+```
+When Prismix merges these two schemas the relations will be connected. 
+
+## `schema.prisma`
+This is the generated file
+
+```
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = "postgresql://..."
+}
+
+model Account {
+    id       Int    @id @default(autoincrement())
+    username String
+    email    String
+    status   String
+    posts:   Post[]
+}
+
+model Posts {
+    id         Int     @id @default(autoincrement())
+    title      String
+    content    String
+    account_id Int
+    account    Account @relation(fields: [account_id], references: [id])
+
+    @@map("posts")
+}
+```
+
+As you can see the property `posts` was added on to the original Account schema and the `account` relation on the Posts schema links to the original Account schema.
