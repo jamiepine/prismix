@@ -1,0 +1,5 @@
+{
+    "input": ["example/schema1.prisma", "example/schema2.prisma"],
+    "output": "example/schema.prisma"
+
+}

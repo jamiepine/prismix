@@ -1,0 +1,15 @@
+model Client {
+    id         String  @id
+    ip_address String?
+    account_id String
+    account    Account @relation(fields: [account_id], references: [id])
+
+    @@map("clients")
+}
+
+model Account {
+    id      String   @id
+    clients Client[]
+
+    @@map("accounts")
+}
