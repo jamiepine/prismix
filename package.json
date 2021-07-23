@@ -2,6 +2,12 @@
   "name": "prismix",
   "version": "1.0.7",
   "description": "Allows you to have multiple Prisma schema files with shared model relations.",
+  "keywords": [
+    "prisma",
+    "schema",
+    "multiple files",
+    "split"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Jamie Pine",

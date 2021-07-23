@@ -2,6 +2,8 @@
  
 ### *The Prisma schema mixer 🍜*
 
+_Made for Prisma v2_
+
 Prisma requires your schema to be written in a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
 
 Unlike `prisma-merge`, Prismix allows model relations to exist between files by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema needs to exist in other modules.
