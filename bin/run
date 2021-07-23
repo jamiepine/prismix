@@ -9,6 +9,4 @@ if (dev) {
   require('ts-node').register({ project });
 }
 
-require(`../${dev ? 'lib' : 'dist'}`)
-  .run()
-  .catch(require('@oclif/errors/handle'));
+require(`../dist`).run().catch(require('@oclif/errors/handle'));

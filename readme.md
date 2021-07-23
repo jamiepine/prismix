@@ -8,7 +8,7 @@ Unlike `prisma-merge`, Prismix allows for cross-file model relations by combinin
 ## Installation
 1. Install Prismix
 ```
-yarn add prismix
+yarn add prismix --dev
 ```
 2. Create a `prismix.config.json` file. This allows you to define how you would like Prismix to merge your schemas. 
 ```json
@@ -35,8 +35,11 @@ yarn add prismix
     "dev": "npx prismix && ts-node server.ts",
   }
 }
-
 ```
+Or just run `npx prismix` from within the repo that contains the Prismix config file. 
+
+Note: If you are using a monorepo you won't be able to run this command from the root, if you add a script `"prismix": "npx prismix"` you could run `yarn workspace my-app prismix`.
+
 
 ## Example
 Let's go over how Prismix merges schemas. We'll keep it simple with two schemas that need to relate to each other.
