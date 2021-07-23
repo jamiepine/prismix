@@ -134,6 +134,6 @@ Using the Prisma SDK we parse the input schemas into a DMMF objects, then proces
 
 
 ## To-do
-[x] Make it work
-[ ] Make `prismix.config.json` optional.
-[ ] Add command flags.
+- [x] Make it work
+- [ ] Make `prismix.config.json` optional.
+- [ ] Add command flags.
