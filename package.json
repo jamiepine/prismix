@@ -1,12 +1,25 @@
 {
   "name": "prismix",
-  "version": "1.0.0",
-  "description": "A Prisma schema mixer",
+  "version": "1.0.1",
+  "description": "Allows you to have multiple Prisma schema files with shared model relations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Jamie Pine",
   "license": "MIT",
+  "repository": "https://github.com/jamiepine/prismix",
   "private": false,
+  "scripts": {
+    "prepack": "tsc -b && rm -rf lib",
+    "dev": "nodemon lib/index.ts",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/lib"
+  ],
   "devDependencies": {
     "@types/jsonfile": "^6.0.1",
     "nodemon": "^2.0.12",
@@ -15,11 +28,16 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "@oclif/command": "^1.8.0",
+    "@oclif/config": "^1.17.0",
+    "@oclif/plugin-help": "^3.2.2",
     "@prisma/sdk": "^2.27.0",
     "jsonfile": "^6.1.0"
   },
-  "scripts": {
-    "dev": "nodemon src/index.ts",
-    "build": "tsc"
+  "bin": {
+    "prismix": "./bin/run"
+  },
+  "oclif": {
+    "bin": "prisma-merge"
   }
 }
