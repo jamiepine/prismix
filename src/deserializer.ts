@@ -1,4 +1,3 @@
-// Code adapted from https://github.com/IBM/prisma-schema-transformer/blob/53a173185b/src/deserializer.ts
 import {
   ConnectorType,
   DataSource,
@@ -47,9 +46,9 @@ export interface Model extends DMMF.Model {
   uniqueFields: string[][];
 }
 
-const handlers = (type, kind) => {
+const handlers = (type: any, kind: any) => {
   return {
-    default: (value) => {
+    default: (value: any) => {
       if (kind === 'enum') {
         return `@default(${value})`;
       }
@@ -76,18 +75,18 @@ const handlers = (type, kind) => {
 
       throw new Error(`Unsupported field attribute ${value}`);
     },
-    isId: (value) => (value ? '@id' : ''),
-    isUnique: (value) => (value ? '@unique' : ''),
-    dbNames: (value) => {},
-    relationToFields: (value) => {},
-    relationOnDelete: (value) => {},
-    hasDefaultValue: (value) => {},
-    relationName: (value) => {},
-    documentation: (value) => {},
-    isReadOnly: (value) => {},
-    isGenerated: (value) => {},
-    isUpdatedAt: (value) => (value ? '@updatedAt' : ''),
-    columnName: (value) => (value ? `@map("${value}")` : '')
+    isId: (value: any) => (value ? '@id' : ''),
+    isUnique: (value: any) => (value ? '@unique' : ''),
+    dbNames: (value: any) => {},
+    relationToFields: (value: any) => {},
+    relationOnDelete: (value: any) => {},
+    hasDefaultValue: (value: any) => {},
+    relationName: (value: any) => {},
+    documentation: (value: any) => {},
+    isReadOnly: (value: any) => {},
+    isGenerated: (value: any) => {},
+    isUpdatedAt: (value: any) => (value ? '@updatedAt' : ''),
+    columnName: (value: any) => (value ? `@map("${value}")` : '')
   };
 };
 
@@ -152,7 +151,7 @@ function handleIdFields(idFields: string[]) {
   return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
 }
 
-function handleUniqueFieds(uniqueFields: string[][]) {
+function handleUniqueFields(uniqueFields: string[][]) {
   return uniqueFields.length > 0
     ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`).join('\n')
     : '';
@@ -165,7 +164,7 @@ function handleDbName(dbName: string | null) {
 function handleUrl(envValue: EnvValue) {
   const value = envValue.fromEnvVar ? `env("${envValue.fromEnvVar}")` : envValue.value;
 
-  return `url = ${value}`;
+  return `url = "${value}"`;
 }
 
 function handleProvider(provider: ConnectorType | string) {
@@ -191,7 +190,7 @@ function deserializeModel(model: Model) {
   const output = `
 model ${name} {
 ${handleFields(fields)}
-${handleUniqueFieds(uniqueFields)}
+${handleUniqueFields(uniqueFields)}
 ${handleDbName(dbName)}
 ${handleIdFields(idFields)}
 }`;
@@ -254,3 +253,4 @@ export async function deserializeGenerators(generators: GeneratorConfig[]) {
 export async function deserializeEnums(enums: DMMF.DatamodelEnum[]) {
   return enums.map((each) => deserializeEnum(each)).join('\n');
 }
+// Adapted from https://github.com/IBM/prisma-schema-transformer/blob/53a173185b/src/deserializer.ts
