@@ -28,6 +28,8 @@ yarn add prismix --dev
   "runMigrationsOnStart": true,
 }
 ```
+The order of your input files effects how overrides are considered, the later inputs take priority over the earlier inputs.
+
 2. Add the `npx prismix` command as a prefix to your `package.json` scripts.
 ```json
 {
