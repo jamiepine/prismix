@@ -131,3 +131,9 @@ As you can see the property `posts` was added on to the original Account schema 
 
 ## How it works
 Using the Prisma SDK we parse the input schemas into a DMMF objects, then process the schema merge into a single DMMF object, finally it is converted back into prisma schema format manually using deserializer code I found on IBM's GitHub.
+
+
+## To-do
+[x] Make it work
+[ ] Make `prismix.config.json` optional.
+[ ] Add command flags.
