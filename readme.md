@@ -1,5 +1,7 @@
 # Prismix
-> Create multiple Prisma schema files with shared model relations
+ 
+### *Create multiple Prisma schema files with shared model relations.*
+
 Prisma schemas are required to be in a single file, this tool will merge many prisma schemas into one with support for cross-file relations. 
 
 Unlike `prisma-merge`, Prismix allows for cross-file model relations by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema needs to exist in other modules.
