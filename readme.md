@@ -1,7 +1,8 @@
 # Prismix
-Prisma schemas are required to be in a single file currently, this tool will intelligently merge many prisma schemas into one. 
 
-Unlike `prisma-merge`, Prismix allows for cross-file data relations by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepos where parts of your schema needs to exist in other modules.
+Prisma schemas are required to be in a single file, this tool will merge many prisma schemas into one with support for cross-file relations. 
+
+Unlike `prisma-merge`, Prismix allows for cross-file model relations by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepos where parts of your schema needs to exist in other modules.
 
 
 ## Installation
@@ -118,3 +119,8 @@ model Posts {
 ```
 
 As you can see the property `posts` was added on to the original Account schema and the `account` relation on the Posts schema links to the original Account schema.
+
+
+
+## How it works
+Using the Prisma SDK we parse the input schemas into a DMMF objects, then process the schema merge into a single DMMF object, finally it is converted back into prisma schema format manually using deserializer code I found on IBM's GitHub.
