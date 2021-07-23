@@ -6,12 +6,15 @@
     "prisma",
     "schema",
     "multiple files",
-    "split"
+    "split",
+    "prisma-merge"
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Jamie Pine",
+  "email": "hello@jamiepine.com",
   "license": "MIT",
+  "homepage": "https://github.com/jamiepine/prismix#readme",
   "repository": "https://github.com/jamiepine/prismix",
   "private": false,
   "scripts": {

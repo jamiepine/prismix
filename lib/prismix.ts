@@ -6,8 +6,7 @@ import {
   deserializeEnums,
   deserializeDatasources,
   deserializeModels,
-  deserializeGenerators,
-  Model
+  deserializeGenerators
 } from './deserializer';
 import { DataSource, DMMF, GeneratorConfig } from '@prisma/generator-helper/dist';
 
@@ -36,17 +35,17 @@ async function getSchema(schemaPath: string) {
   const config = await getConfig({ datamodel: schema });
 
   return {
-    models: dmmf.datamodel.models as Model[],
+    models: dmmf.datamodel.models as DMMF.Model[],
     enums: dmmf.datamodel.enums,
     datasources: config.datasources,
     generators: config.generators
   };
 }
 
-function mixModels(inputModels: Model[]) {
-  const models: Record<string, Model> = {};
+function mixModels(inputModels: DMMF.Model[]) {
+  const models: Record<string, DMMF.Model> = {};
   for (const newModel of inputModels) {
-    const existingModel: Model | null = models[newModel.name];
+    const existingModel: DMMF.Model | null = models[newModel.name];
 
     // if the model already exists in our found models, merge the fields
     if (existingModel) {
@@ -77,7 +76,7 @@ export async function prismix(options: PrismixOptions) {
     for (const input of mixer.input) schemasToMix.push(await getSchema(input));
 
     // extract all models and mix
-    let models: Model[] = [];
+    let models: DMMF.Model[] = [];
     for (const schema of schemasToMix) models = [...models, ...schema.models];
     models = mixModels(models);
 
