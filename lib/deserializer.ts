@@ -114,47 +114,45 @@ function handleAttributes(attributes: Attribute, kind: DMMF.FieldKind, type: str
   return '';
 }
 
-function handleFields(fields: Field[]) {
-  return fields
-    .map((fields) => {
-      const { name, kind, type, isRequired, isList, ...attributes } = fields;
-      if (kind === 'scalar') {
-        return `  ${name} ${type}${isRequired ? '' : '?'} ${handleAttributes(
+function handleFields(fields: Field[]): string[] {
+  return fields.map((fields) => {
+    const { name, kind, type, isRequired, isList, ...attributes } = fields;
+
+    switch (kind) {
+      case 'scalar':
+        return `${name} ${type}${isRequired ? '' : '?'} ${handleAttributes(
           attributes,
           kind,
           type
         )}`;
-      }
 
-      if (kind === 'object') {
-        return `  ${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${handleAttributes(
+      case 'object':
+        return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${handleAttributes(
           attributes,
           kind,
           type
         )}`;
-      }
 
-      if (kind === 'enum') {
-        return `  ${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${handleAttributes(
+      case 'enum':
+        return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${handleAttributes(
           attributes,
           kind,
           type
         )}`;
-      }
+    }
 
-      throw new Error(`Unsupported field kind "${kind}"`);
-    })
-    .join('\n');
+    throw new Error(`Prismix: Unsupported field kind "${kind}"`);
+  });
 }
 
 function handleIdFields(idFields: string[]) {
   return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
 }
 
-function handleUniqueFields(uniqueFields: string[][]) {
+function handleUniqueFields(uniqueFields: string[][]): string[] {
   return uniqueFields.length > 0
-    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`).join('\n')
-    : '';
+    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`)
+    : [];
 }
 
 function handleDbName(dbName: string | null) {
@@ -183,43 +181,40 @@ function handlePreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures
   return previewFeatures.length ? `previewFeatures = ${JSON.stringify(previewFeatures)}` : '';
 }
 
+function assembleBlock(type: string, name: string, things: string[]) {
+  return `${type} ${name} {\n${things
+    .filter((thing) => thing.length > 1)
+    .map((thing) => `\t${thing}`)
+    .join('\n')}\n}`;
+}
+
 function deserializeModel(model: Model) {
   const { name, uniqueFields, dbName, idFields } = model;
   const fields = model.fields as unknown as Field[];
 
-  const output = `
-model ${name} {
-${handleFields(fields)}
-${handleUniqueFields(uniqueFields)}
-${handleDbName(dbName)}
-${handleIdFields(idFields)}
-}`;
-  return output;
+  return assembleBlock('model', name, [
+    ...handleFields(fields),
+    ...handleUniqueFields(uniqueFields),
+    handleDbName(dbName),
+    handleIdFields(idFields)
+  ]);
 }
 
 function deserializeDatasource(datasource: DataSource) {
   const { activeProvider: provider, name, url } = datasource;
-
-  return `
-datasource ${name} {
-	${handleProvider(provider)}
-	${handleUrl(url)}
-}`;
+  return assembleBlock('datasource', name, [handleProvider(provider), handleUrl(url)]);
 }
 
 function deserializeGenerator(generator: GeneratorConfig) {
   const { binaryTargets, name, output, provider, previewFeatures } = generator;
 
-  return `
-generator ${name} {
-	${handleProvider(provider.value)}
-	${handleOutput(output?.value || null)}
-	${
+  return assembleBlock('generator', name, [
+    handleProvider(provider.value),
+    handleOutput(output?.value || null),
     //@ts-ignore
-    handleBinaryTargets(binaryTargets)
-  }
-	${handlePreviewFeatures(previewFeatures)}
-}`;
+    handleBinaryTargets(binaryTargets),
+    handlePreviewFeatures(previewFeatures)
+  ]);
 }
 
 function deserializeEnum({ name, values, dbName }: DMMF.DatamodelEnum) {
@@ -228,11 +223,7 @@ function deserializeEnum({ name, values, dbName }: DMMF.DatamodelEnum) {
     if (name !== dbName && dbName) result += `@map("${dbName}")`;
     return result;
   });
-  return `
-enum ${name} {
-	${outputValues.join('\n\t')}
-	${handleDbName(dbName || null)}
-}`;
+  return assembleBlock('enum', name, [...outputValues, handleDbName(dbName || null)]);
 }
 
 /**
