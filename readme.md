@@ -24,8 +24,7 @@ yarn add prismix --dev
         ],
         "output": "prisma/schema.prisma"
     }
-  ],
-  "runMigrationsOnStart": true,
+  ]
 }
 ```
 The order of your input files effects how overrides are considered, the later inputs take priority over the earlier inputs.
