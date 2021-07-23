@@ -1,7 +1,0 @@
-model Account {
-    id       String  @id
-    username String
-    admin    Boolean
-
-    @@map("accounts")
-}

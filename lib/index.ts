@@ -23,6 +23,10 @@ class Prismix extends Command {
       path.join(process.cwd(), 'prismix.config.json')
     )) as PrismixOptions;
 
+    for (const mixer of options.mixers) {
+      if (!mixer.output) mixer.output = 'prisma/schema.prisma';
+    }
+
     await prismix(options);
   }
 }

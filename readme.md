@@ -18,11 +18,11 @@ yarn add prismix --dev
   "mixers": [
     {
         "input": [
-            "./base.prisma",
+            "base.prisma",
             "../lib/auth/auth.prisma", 
             "../lib/posts/posts.prisma",
         ],
-        "output": "prisma/schema.prisma"
+        "output": "prisma/schema.prisma" // << default is this, so you can omit this line
     }
   ]
 }
@@ -35,7 +35,8 @@ The order of your input files effects how overrides are considered, the later in
   "name": "my-app",
   "version": "1.0.0",
   "scripts": {
-    "dev": "npx prismix && ts-node server.ts",
+    "prismix": "npx prismix && prisma format", // << prisma format is optional, but I like clean code
+    "dev": "yarn prismix && ts-node server.ts",
   }
 }
 ```
