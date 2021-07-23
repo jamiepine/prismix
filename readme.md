@@ -38,7 +38,7 @@ yarn add prismix
 ```
 
 ## Example
-Let's go over how Prismix merges schemas. We'll keep it simple here and start with two schemas, but they need to relate to each other.
+Let's go over how Prismix merges schemas. We'll keep it simple with two schemas that need to relate to each other.
 
 ## `base.prisma`
 
@@ -62,6 +62,7 @@ model Account {
     @@map("accounts")
 }
 ```
+We've established our `generator` and `datasource`, as well as our first model, `Account`. 
 
 ## `posts.prisma`
 Now we'll create the Posts schema in a different file. In order for posts to relate to accounts we can define an empty model to represent the account.
@@ -79,7 +80,7 @@ model Posts {
 
 model Account {
     id     String
-    posts: Post[]
+    posts  Post[]
 }
 ```
 When Prismix merges these two schemas the relations will be connected. 
@@ -102,7 +103,7 @@ model Account {
     username String
     email    String
     status   String
-    posts:   Post[]
+    posts    Post[]
 }
 
 model Posts {
