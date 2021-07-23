@@ -9,7 +9,7 @@
   "repository": "https://github.com/jamiepine/prismix",
   "private": false,
   "scripts": {
-    "prepack": "tsc -b && rm -rf lib",
+    "prepack": "tsc -b",
     "dev": "nodemon lib/index.ts",
     "build": "tsc"
   },
