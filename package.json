@@ -1,6 +1,6 @@
 {
   "name": "prismix",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Create multiple Prisma schema files with shared model relations.",
   "keywords": [
     "prisma",
