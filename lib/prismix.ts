@@ -86,7 +86,10 @@ export async function prismix(options: PrismixOptions) {
     // use the last found datasources
     let datasources: DataSource[] = [];
     schemasToMix.forEach(
-      (schema) => schema.datasources.length > 0 && (datasources = schema.datasources)
+      (schema) =>
+        schema.datasources.length > 0 &&
+        schema.datasources.filter((d) => d.url.value).length > 0 &&
+        (datasources = schema.datasources)
     );
     // use the last found generators
     let generators: GeneratorConfig[] = [];

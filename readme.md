@@ -6,7 +6,7 @@ _Made for Prisma v2_
 
 Prisma requires your schema to be written in a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
 
-Unlike `prisma-merge`, Prismix allows model relations to exist between files by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema needs to exist in other modules.
+Unlike `prisma-merge`, Prismix allows model relations to exist between files by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema need to exist in separate modules.
 
 
 ## Installation
@@ -30,9 +30,10 @@ yarn add prismix --dev
 }
 ```
 The order of your input files effects how overrides are considered, the later inputs take priority over the earlier inputs.
-The default `output` value is `prisma/schema.prisma` and Prisma encourages you to keep is as such, especially if you want to use `prisma format`.
 
-2. Add the `npx prismix` command as a prefix to your `package.json` scripts.
+The default `output` value is `prisma/schema.prisma` (it can be omitted from the config) and Prisma encourages you to keep is as such, especially if you want to use `prisma format`.
+
+3. Add the `npx prismix` command as a prefix to your `package.json` scripts.
 ```json
 {
   "name": "my-app",
@@ -43,9 +44,9 @@ The default `output` value is `prisma/schema.prisma` and Prisma encourages you t
   }
 }
 ```
-Using `prisma format` is optional, but I like clean code.
-
 Or just run `npx prismix` from within the repo that contains the Prismix config file. 
+
+Using `prisma format` is optional, but I like clean code.
 
 Note: If you are using a monorepo you won't be able to run this command from the root, if you add a script `"prismix": "npx prismix"` you could run `yarn workspace my-app prismix`.
 
@@ -143,3 +144,5 @@ Using the Prisma SDK we parse the input schemas into a DMMF objects, then proces
 - [ ] Add glog support for wildcard schema discovery
 - [ ] Make `prismix.config.json` optional
 - [ ] Add command flags
+
+Created by [@jamiepine](https://twitter.com/jamiepine)
