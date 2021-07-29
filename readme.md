@@ -93,7 +93,7 @@ model Posts {
 }
 
 model Account {
-    id     String
+    id     String @id
     posts  Post[]
 }
 ```
