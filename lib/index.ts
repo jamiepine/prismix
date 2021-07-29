@@ -3,6 +3,9 @@ import { prismix, PrismixOptions } from './prismix';
 import { promisify } from 'util';
 import jsonfile from 'jsonfile';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const readJsonFile = promisify(jsonfile.readFile);
 

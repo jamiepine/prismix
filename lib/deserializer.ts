@@ -80,9 +80,9 @@ function renderDbName(dbName: string | null): string {
   return dbName ? `@@map("${dbName}")` : '';
 }
 function renderUrl(envValue: EnvValue): string {
-  const value = envValue.fromEnvVar ? `env("${envValue.fromEnvVar}")` : envValue.value;
+  const value = envValue.fromEnvVar ? `env("${envValue.fromEnvVar}")` : `"${envValue.value}"`;
 
-  return `url = "${value}"`;
+  return `url = ${value}`;
 }
 function renderProvider(provider: ConnectorType | string): string {
   return `provider = "${provider}"`;
