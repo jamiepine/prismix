@@ -1,10 +1,12 @@
 # `Prismix`
  
-### *The Prisma schema mixer 🍜*
+### *The Prisma schema mixer 🍹*
 
-_Made for Prisma v2_
+_Made for Prisma `^2.0`_
 
-Prisma requires your schema to be written in a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
+> Learn more about Prisma: [prisma.io](https://prisma.io)
+
+Prisma restricts your schema to a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
 
 Unlike `prisma-merge`, Prismix allows model relations to exist between files by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema need to exist in separate modules.
 
@@ -13,6 +15,10 @@ Unlike `prisma-merge`, Prismix allows model relations to exist between files by 
 1. Install Prismix
 ```
 yarn add prismix --dev
+```
+or NPM
+```
+npm install prismix --dev
 ```
 2. Create a `prismix.config.json` file. This allows you to define how you would like Prismix to merge your schemas. 
 ```json
