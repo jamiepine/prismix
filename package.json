@@ -27,8 +27,7 @@
   },
   "files": [
     "/bin",
-    "/dist",
-    "/lib"
+    "/dist"
   ],
   "devDependencies": {
     "@types/jsonfile": "^6.0.1",

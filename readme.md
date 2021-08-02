@@ -1,12 +1,17 @@
 # `Prismix`
  
 ### *The Prisma schema mixer 🍹*
-
 _Made for Prisma `^2.0`_
+
+[![Downloads](https://img.shields.io/npm/dt/prismix.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/prismix)
+[![Downloads](https://img.shields.io/npm/v/prismix.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/prismix)
+[![Build Size](https://img.shields.io/bundlephobia/min/prismix?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=prismix)
+
+
+Prisma restricts your schema to a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
 
 > Learn more about Prisma: [prisma.io](https://prisma.io)
 
-Prisma restricts your schema to a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
 
 Unlike `prisma-merge`, Prismix allows model relations to exist between files by combining models and enums, allowing you to extend and override Models as you please. This is ideal when working in a monorepo where parts of your schema need to exist in separate modules.
 
@@ -142,7 +147,7 @@ As you can see the property `posts` was added on to the original Account schema 
 
 
 ## How it works
-Using the Prisma SDK we parse the input schemas into a DMMF objects, then process the schema merge into a single DMMF object, finally it is converted back into Prisma schema format manually using deserializer code I found on IBM's GitHub... and cleaned up massively.
+Using the Prisma SDK we parse the input schemas into a DMMF objects, then process the schema merge into a single DMMF object as per the config file, finally it is converted back into Prisma schema format using a custom deserializer, adapted from `@IBM/prisma-schema-transformer` and written to the output location.
 
 
 ## To-do
