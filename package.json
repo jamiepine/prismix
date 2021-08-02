@@ -41,11 +41,11 @@
     "@oclif/command": "^1.8.0",
     "@oclif/config": "^1.17.0",
     "@oclif/plugin-help": "^3.2.2",
-    "dotenv": "^10.0.0",
     "jsonfile": "^6.1.0"
   },
   "peerDependencies": {
-    "@prisma/sdk": "^2.27.0"
+    "@prisma/sdk": "^2.27.0",
+    "dotenv": "^10.0.0"
   },
   "bin": {
     "prismix": "./bin/run"
