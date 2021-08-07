@@ -1,6 +1,6 @@
 {
   "name": "prismix",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Create multiple Prisma schema files with shared model relations.",
   "keywords": [
     "prisma",
@@ -40,10 +40,10 @@
     "@oclif/command": "^1.8.0",
     "@oclif/config": "^1.17.0",
     "@oclif/plugin-help": "^3.2.2",
+    "@prisma/sdk": "^2.27.0",
     "jsonfile": "^6.1.0"
   },
   "peerDependencies": {
-    "@prisma/sdk": "^2.27.0",
     "dotenv": "^10.0.0"
   },
   "bin": {
