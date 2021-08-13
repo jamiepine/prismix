@@ -24,22 +24,29 @@ export interface PrismixOptions {
 
 type UnPromisify<T> = T extends Promise<infer U> ? U : T;
 
-type Schema = UnPromisify<ReturnType<typeof getSchema>>;
+type Schema = NonNullable<UnPromisify<ReturnType<typeof getSchema>>>;
 
 async function getSchema(schemaPath: string) {
-  const schema = await readFile(path.join(process.cwd(), schemaPath), {
-    encoding: 'utf-8'
-  });
+  try {
+    const schema = await readFile(path.join(process.cwd(), schemaPath), {
+      encoding: 'utf-8'
+    });
 
-  const dmmf = await getDMMF({ datamodel: schema });
-  const config = await getConfig({ datamodel: schema });
+    const dmmf = await getDMMF({ datamodel: schema });
+    const config = await getConfig({ datamodel: schema });
 
-  return {
-    models: dmmf.datamodel.models as DMMF.Model[],
-    enums: dmmf.datamodel.enums,
-    datasources: config.datasources,
-    generators: config.generators
-  };
+    return {
+      models: dmmf.datamodel.models as DMMF.Model[],
+      enums: dmmf.datamodel.enums,
+      datasources: config.datasources,
+      generators: config.generators
+    };
+  } catch (e) {
+    console.error(
+      `Prismix failed to parse schema located at "${schemaPath}". Did you attempt to reference to a model without creating an alias? Remember you must define a "blank" alias model with only the "@id" field in your extended schemas otherwise we can't parse your schema.`,
+      e
+    );
+  }
 }
 
 function mixModels(inputModels: DMMF.Model[]) {
@@ -73,7 +80,10 @@ export async function prismix(options: PrismixOptions) {
     const schemasToMix: Schema[] = [];
 
     // load the schema data for all inputs
-    for (const input of mixer.input) schemasToMix.push(await getSchema(input));
+    for (const input of mixer.input) {
+      const parsedSchema = await getSchema(input);
+      if (parsedSchema) schemasToMix.push(parsedSchema);
+    }
 
     // extract all models and mix
     let models: DMMF.Model[] = [];
