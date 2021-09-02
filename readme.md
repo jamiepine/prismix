@@ -166,7 +166,7 @@ Using the Prisma SDK we parse the input schemas into a DMMF objects, then proces
 
 ## To-do
 - [x] Make it work
-- [ ] Add glog support for wildcard schema discovery
+- [x] Add glob support for wildcard schema discovery
 - [ ] Make `prismix.config.json` optional
 - [ ] Add command flags
 
