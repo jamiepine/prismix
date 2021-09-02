@@ -30,6 +30,7 @@
     "/dist"
   ],
   "devDependencies": {
+    "@types/glob": "^7.1.4",
     "@types/jsonfile": "^6.0.1",
     "nodemon": "^2.0.12",
     "prettier": "^2.3.2",
@@ -41,6 +42,7 @@
     "@oclif/config": "^1.17.0",
     "@oclif/plugin-help": "^3.2.2",
     "@prisma/sdk": "^2.27.0",
+    "glob": "^7.1.7",
     "jsonfile": "^6.1.0"
   },
   "peerDependencies": {

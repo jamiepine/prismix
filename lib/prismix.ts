@@ -9,6 +9,7 @@ import {
   deserializeGenerators
 } from './deserializer';
 import { DataSource, DMMF, GeneratorConfig } from '@prisma/generator-helper/dist';
+import glob from 'glob';
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -81,8 +82,10 @@ export async function prismix(options: PrismixOptions) {
 
     // load the schema data for all inputs
     for (const input of mixer.input) {
-      const parsedSchema = await getSchema(input);
-      if (parsedSchema) schemasToMix.push(parsedSchema);
+      for (const file of glob.sync(input)) {
+        const parsedSchema = await getSchema(file);
+        if (parsedSchema) schemasToMix.push(parsedSchema);
+      }
     }
 
     // extract all models and mix
