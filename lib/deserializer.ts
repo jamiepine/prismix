@@ -106,12 +106,12 @@ function renderBlock(type: string, name: string, things: string[]): string {
 }
 
 function deserializeModel(model: DMMF.Model): string {
-  const { name, fields, uniqueFields, dbName, idFields } = model;
+  const { name, fields, uniqueFields, dbName, idFields, primaryKey } = model;
   return renderBlock('model', name, [
     ...renderModelFields(fields),
     ...renderUniqueFields(uniqueFields),
     renderDbName(dbName),
-    renderIdFields(idFields)
+    renderIdFields(idFields || primaryKey)
   ]);
 }
 
