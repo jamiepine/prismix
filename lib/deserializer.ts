@@ -68,7 +68,9 @@ function renderModelFields(fields: DMMF.Field[]): string[] {
   });
 }
 
-function renderIdFields(idFields: string[]): string {
+function renderIdFieldsOrPrimaryKey(idFields: string[]): string {
+  // as of Prisma version ^2.30.0 idFields has become primaryKey, we should support both
+  if (!idFields) return ''; // <- this is a hotfix until it can be looked into
   return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
 }
 function renderUniqueFields(uniqueFields: string[][]): string[] {
@@ -111,7 +113,7 @@ function deserializeModel(model: DMMF.Model): string {
     ...renderModelFields(fields),
     ...renderUniqueFields(uniqueFields),
     renderDbName(dbName),
-    renderIdFields(idFields || primaryKey)
+    renderIdFieldsOrPrimaryKey(idFields || primaryKey)
   ]);
 }
 
