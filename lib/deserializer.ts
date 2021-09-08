@@ -12,7 +12,7 @@ const renderAttribute = (field: DMMF.Field) => {
   const { kind, type } = field;
   return {
     default: (value: any) => {
-      if (!value) return '';
+      if (value == null || value == undefined) return '';
       // convert value to a string, only if kind is scalar and NOT a BigInt
       if (kind === 'scalar' && type !== 'BigInt' && typeof value == 'string') value = `"${value}"`;
       // if number, string or boolean we are ready to return!
