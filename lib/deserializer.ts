@@ -113,7 +113,7 @@ function deserializeModel(model: DMMF.Model): string {
     ...renderModelFields(fields),
     ...renderUniqueFields(uniqueFields),
     renderDbName(dbName),
-    renderIdFieldsOrPrimaryKey(idFields || primaryKey)
+    renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
   ]);
 }
 
