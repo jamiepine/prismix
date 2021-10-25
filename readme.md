@@ -5,7 +5,6 @@ _Made for Prisma `^2.0`_
 
 [![Downloads](https://img.shields.io/npm/dt/prismix.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/prismix)
 [![Downloads](https://img.shields.io/npm/v/prismix.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/prismix)
-[![Build Size](https://img.shields.io/bundlephobia/min/prismix?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=prismix)
 
 
 Prisma restricts your schema to a single file, Prismix allows you to write as many schema files as you'd like, wherever you like—all while supporting cross-file model relations 🤯
