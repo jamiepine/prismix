@@ -59,7 +59,7 @@ function renderModelFields(fields: DMMF.Field[]): string[] {
     const { name, kind, type, isRequired, isList } = field;
 
     if (kind == 'scalar')
-      return `${name} ${type}${isRequired ? '' : '?'} ${renderAttributes(field)}`;
+      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(field)}`;
 
     if (kind == 'object' || kind == 'enum')
       return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(field)}`;
