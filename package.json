@@ -1,6 +1,6 @@
 {
   "name": "prismix",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Create multiple Prisma schema files with shared model relations.",
   "keywords": [
     "prisma",
@@ -20,7 +20,8 @@
   "scripts": {
     "prepack": "tsc -b",
     "dev": "tsc-watch",
-    "build": "tsc"
+    "build": "tsc",
+    "postinstall": "npm run build"
   },
   "engines": {
     "node": ">=8.0.0"
