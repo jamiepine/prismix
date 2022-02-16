@@ -92,7 +92,7 @@ function mixModels(inputModels: Model[]) {
             newField.hasDefaultValue = true;
             newField.default = existingField.default;
           }
-          
+
           // replace the field at this index with the new one
           existingModel.fields[existingFieldIndex] = newField;
         } else {
@@ -103,6 +103,18 @@ function mixModels(inputModels: Model[]) {
       // Assign dbName (@@map) based on new model if found
       if (!existingModel.dbName && newModel.dbName) {
         existingModel.dbName = newModel.dbName;
+      }
+
+      // Merge unique indexes (@@unique) based on new model if found
+      if (newModel.uniqueIndexes?.length) {
+        existingModel.uniqueIndexes = [
+          ...(existingModel.uniqueIndexes ?? []),
+          ...newModel.uniqueIndexes
+        ];
+        existingModel.uniqueFields = [
+          ...(existingModel.uniqueFields ?? []),
+          ...newModel.uniqueFields
+        ];
       }
     } else {
       models[newModel.name] = newModel;
