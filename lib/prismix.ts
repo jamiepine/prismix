@@ -10,6 +10,7 @@ import {
 } from './deserializer';
 import { DataSource, DMMF, GeneratorConfig } from '@prisma/generator-helper/dist';
 import glob from 'glob';
+import { CustomAttributes, Field, Model } from './dmmf-extension';
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -21,14 +22,6 @@ export interface MixerOptions {
 
 export interface PrismixOptions {
   mixers: MixerOptions[];
-}
-interface Field extends DMMF.Field {
-  columnName?: string;
-  dbType?: string;
-}
-type CustomAttributes = { columnName?: string; dbType?: string };
-interface Model extends DMMF.Model {
-  fields: Field[];
 }
 
 type UnPromisify<T> = T extends Promise<infer U> ? U : T;
@@ -45,10 +38,12 @@ async function getSchema(schemaPath: string) {
     const customAttributes = getCustomAttributes(schema);
     const models: Model[] = dmmf.datamodel.models.map((model: Model) => ({
       ...model,
+      doubleAtIndexes: customAttributes[model.name]?.doubleAtIndexes,
       fields: model.fields.map((field) =>
         // Inject columnName and db.Type from the parsed fieldMappings above
         {
-          const attributes = customAttributes[model.name]?.[field.name] ?? {};
+          const attributes = customAttributes[model.name]?.fields[field.name] ?? {};
+
           return { ...field, columnName: attributes.columnName, dbType: attributes.dbType };
         }
       )
@@ -104,6 +99,14 @@ function mixModels(inputModels: Model[]) {
       if (!existingModel.dbName && newModel.dbName) {
         existingModel.dbName = newModel.dbName;
       }
+      
+      // Merge doubleAtIndexes (@@index) based on new model if found
+      if (newModel.doubleAtIndexes?.length) {
+        existingModel.doubleAtIndexes = [
+          ...(existingModel.doubleAtIndexes ?? []),
+          ...newModel.doubleAtIndexes
+        ];
+      }
 
       // Merge unique indexes (@@unique) based on new model if found
       if (newModel.uniqueIndexes?.length) {
@@ -139,15 +142,28 @@ function getCustomAttributes(datamodel: string) {
       // Regex for getting our @map attribute
       const mapRegex = new RegExp(/[^@]@map\("(?<name>.*)"\)/);
       const dbRegex = new RegExp(/(?<type>@db\.(.*)\))/);
+      const doubleAtIndexRegex = new RegExp(/(?<index>@@index\(.*\))/);
+      const doubleAtIndexes = pieces
+        .reduce((ac: string[], field) => {
+          const item = field.match(doubleAtIndexRegex)?.groups?.index;
+          return item ? [...ac, item] : ac;
+        }, [])
+        .filter((f) => f);
       const fieldsWithCustomAttributes = pieces
         .map((field) => {
           const columnName = field.match(mapRegex)?.groups?.name;
           const dbType = field.match(dbRegex)?.groups?.type;
-          return [field.trim().split(' ')[0], { columnName, dbType }] as [string, CustomAttributes];
+          return [field.trim().split(' ')[0], { columnName, dbType }] as [
+            string,
+            CustomAttributes['fields'][0]
+          ];
         })
         .filter((f) => f[1]?.columnName || f[1]?.dbType);
 
-      return { ...modelDefinitions, [modelName]: Object.fromEntries(fieldsWithCustomAttributes) };
+      return {
+        ...modelDefinitions,
+        [modelName]: { fields: Object.fromEntries(fieldsWithCustomAttributes), doubleAtIndexes }
+      };
     },
     {}
   );

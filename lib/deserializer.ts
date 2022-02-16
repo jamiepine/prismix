@@ -1,14 +1,15 @@
 import {
   ConnectorType,
   DataSource,
-  DMMF,
   EnvValue,
+  DMMF,
   GeneratorConfig
 } from '@prisma/generator-helper/dist';
+import { Field, Model } from './dmmf-extension';
 import { valueIs } from './utils';
 
 // Render an individual field attribute
-const renderAttribute = (field: DMMF.Field) => {
+const renderAttribute = (field: Field) => {
   const { kind, type } = field;
   return {
     default: (value: any) => {
@@ -108,11 +109,12 @@ function renderBlock(type: string, name: string, things: string[]): string {
     .join('\n')}\n}`;
 }
 
-function deserializeModel(model: DMMF.Model): string {
-  const { name, fields, uniqueFields, dbName, idFields, primaryKey } = model;
+function deserializeModel(model: Model): string {
+  const { name, fields, uniqueFields, dbName, idFields, primaryKey, doubleAtIndexes } = model;
   return renderBlock('model', name, [
     ...renderModelFields(fields),
     ...renderUniqueFields(uniqueFields),
+    ...(doubleAtIndexes ?? []),
     renderDbName(dbName),
     renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
   ]);
@@ -143,7 +145,7 @@ function deserializeEnum({ name, values, dbName }: DMMF.DatamodelEnum) {
 }
 
 // Exportable methods
-export async function deserializeModels(models: DMMF.Model[]) {
+export async function deserializeModels(models: Model[]) {
   return models.map((model) => deserializeModel(model)).join('\n');
 }
 export async function deserializeDatasources(datasources: DataSource[]) {
