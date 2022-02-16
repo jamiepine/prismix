@@ -24,7 +24,9 @@ export interface PrismixOptions {
 }
 interface Field extends DMMF.Field {
   columnName?: string;
+  dbType?: string;
 }
+type CustomAttributes = { columnName?: string; dbType?: string };
 interface Model extends DMMF.Model {
   fields: Field[];
 }
@@ -40,13 +42,14 @@ async function getSchema(schemaPath: string) {
     });
 
     const dmmf = await getDMMF({ datamodel: schema });
-    const fieldMappings = getModelFieldMappings(schema);
+    const customAttributes = getCustomAttributes(schema);
     const models: Model[] = dmmf.datamodel.models.map((model: Model) => ({
       ...model,
       fields: model.fields.map((field) =>
-        // Inject columnName from the parsed fieldMappings above
+        // Inject columnName and db.Type from the parsed fieldMappings above
         {
-          return { ...field, columnName: fieldMappings[model.name]?.[field.name] };
+          const attributes = customAttributes[model.name]?.[field.name] ?? {};
+          return { ...field, columnName: attributes.columnName, dbType: attributes.dbType };
         }
       )
     }));
@@ -104,35 +107,32 @@ function mixModels(inputModels: Model[]) {
 
 // Extract @map attributes, which aren't accessible from the prisma SDK
 // Adapted from https://github.com/sabinadams/aurora/commit/acb020d868f2ba16b114cf084b959b65d0294a73#diff-8f1b0a136f29e1af67b019f53772aa2e80bf4d24e2c8b844cfa993d8cc9df789
-function getModelFieldMappings(datamodel: string): Record<string, Record<string, string>> {
+function getCustomAttributes(datamodel: string) {
   // Split the schema up by the ending of each block and then keep each starting with 'model'
   // This should essentially give us an array of the model blocks
   const modelChunks = datamodel.split('\n}');
-  return modelChunks.reduce((modelDefinitions: { [k: string]: any }, modelChunk: string) => {
-    // Split the model chunk by line to get the individual fields
-    let pieces = modelChunk.split('\n').filter((chunk) => chunk.trim().length);
-    // Pull out model name
-    const modelName = pieces.find(name=>name.match(/model (.*) {/))?.split(' ')[1];
-    if(!modelName) return modelDefinitions;
-    // Regex for getting our @map attribute
-    const mapRegex = new RegExp(/[^@]@map/);
-    // Get all of the model's fields out that have the @map attribute
-    const fieldsWithMappings = pieces
-      // Clean up new lines and spaces out of the string
-      .map((field) => field.replace(/\t/g, '').trim())
-      // Get rid of any fields that don't even have a @map
-      .filter((field) => mapRegex.test(field));  
-    // Add an index to the reduced array named the model's name
-    // The value is an object whose keys are field names and their values are mapping names
-    modelDefinitions[modelName] = fieldsWithMappings.reduce(
-      (mappings: { [key: string]: any }, field) => ({
-        ...mappings,
-        [field.trim().split(' ')[0]]: field.split('@map("')[1].split('"')[0]
-      }),
-      {}
-    );
-    return modelDefinitions;
-  }, {});
+  return modelChunks.reduce(
+    (modelDefinitions: Record<string, CustomAttributes>, modelChunk: string) => {
+      // Split the model chunk by line to get the individual fields
+      let pieces = modelChunk.split('\n').filter((chunk) => chunk.trim().length);
+      // Pull out model name
+      const modelName = pieces.find((name) => name.match(/model (.*) {/))?.split(' ')[1];
+      if (!modelName) return modelDefinitions;
+      // Regex for getting our @map attribute
+      const mapRegex = new RegExp(/[^@]@map\("(?<name>.*)"\)/);
+      const dbRegex = new RegExp(/(?<type>@db\.(.*)\))/);
+      const fieldsWithCustomAttributes = pieces
+        .map((field) => {
+          const columnName = field.match(mapRegex)?.groups?.name;
+          const dbType = field.match(dbRegex)?.groups?.type;
+          return [field.trim().split(' ')[0], { columnName, dbType }] as [string, CustomAttributes];
+        })
+        .filter((f) => f[1]?.columnName || f[1]?.dbType);
+
+      return { ...modelDefinitions, [modelName]: Object.fromEntries(fieldsWithCustomAttributes) };
+    },
+    {}
+  );
 }
 
 export async function prismix(options: PrismixOptions) {
