@@ -25,7 +25,8 @@ const renderAttribute = (field: DMMF.Field) => {
     isId: (value: any) => (value ? '@id' : ''),
     isUnique: (value: any) => (value ? '@unique' : ''),
     isUpdatedAt: (value: any) => (value ? '@updatedAt' : ''),
-    columnName: (value: any) => (value ? `@map("${value}")` : '')
+    columnName: (value: any) => (value ? `@map("${value}")` : ''),
+    dbType: (value: any) => value ?? ''
   };
 };
 
