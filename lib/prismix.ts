@@ -87,6 +87,12 @@ function mixModels(inputModels: Model[]) {
             newField.columnName = existingField.columnName;
           }
 
+          // Assign defaults based on existing field if found
+          if (!newField.hasDefaultValue && existingField.hasDefaultValue) {
+            newField.hasDefaultValue = true;
+            newField.default = existingField.default;
+          }
+          
           // replace the field at this index with the new one
           existingModel.fields[existingFieldIndex] = newField;
         } else {
