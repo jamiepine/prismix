@@ -69,6 +69,10 @@ function mixModels(inputModels: DMMF.Model[]) {
           existingModel.fields.push(newField);
         }
       }
+      // Assign dbName (@@map) based on new model if found
+      if (!existingModel.dbName && newModel.dbName) {
+        existingModel.dbName = newModel.dbName;
+      }
     } else {
       models[newModel.name] = newModel;
     }
