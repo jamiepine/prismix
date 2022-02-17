@@ -1,5 +1,9 @@
 import { DMMF } from '@prisma/generator-helper/dist';
-export type CustomFieldAttributes = { columnName?: string; dbType?: string };
+export type CustomFieldAttributes = {
+  columnName?: string;
+  dbType?: string;
+  relationOnUpdate?: string;
+};
 export type CustomModelAttributes = { doubleAtIndexes?: string[] };
 
 export type CustomAttributes = {

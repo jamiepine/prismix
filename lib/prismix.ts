@@ -44,7 +44,12 @@ async function getSchema(schemaPath: string) {
         {
           const attributes = customAttributes[model.name]?.fields[field.name] ?? {};
 
-          return { ...field, columnName: attributes.columnName, dbType: attributes.dbType };
+          return {
+            ...field,
+            columnName: attributes.columnName,
+            dbType: attributes.dbType,
+            relationOnUpdate: attributes.relationOnUpdate
+          };
         }
       )
     }));
@@ -99,7 +104,7 @@ function mixModels(inputModels: Model[]) {
       if (!existingModel.dbName && newModel.dbName) {
         existingModel.dbName = newModel.dbName;
       }
-      
+
       // Merge doubleAtIndexes (@@index) based on new model if found
       if (newModel.doubleAtIndexes?.length) {
         existingModel.doubleAtIndexes = [
@@ -142,6 +147,9 @@ function getCustomAttributes(datamodel: string) {
       // Regex for getting our @map attribute
       const mapRegex = new RegExp(/[^@]@map\("(?<name>.*)"\)/);
       const dbRegex = new RegExp(/(?<type>@db\.(.*)\))/);
+      const relationOnUpdateRegex = new RegExp(
+        /onUpdate: (?<op>Cascade|NoAction|Restrict|SetDefault|SetNull)/
+      );
       const doubleAtIndexRegex = new RegExp(/(?<index>@@index\(.*\))/);
       const doubleAtIndexes = pieces
         .reduce((ac: string[], field) => {
@@ -153,12 +161,13 @@ function getCustomAttributes(datamodel: string) {
         .map((field) => {
           const columnName = field.match(mapRegex)?.groups?.name;
           const dbType = field.match(dbRegex)?.groups?.type;
-          return [field.trim().split(' ')[0], { columnName, dbType }] as [
+          const relationOnUpdate = field.match(relationOnUpdateRegex)?.groups?.op;
+          return [field.trim().split(' ')[0], { columnName, dbType, relationOnUpdate }] as [
             string,
             CustomAttributes['fields'][0]
           ];
         })
-        .filter((f) => f[1]?.columnName || f[1]?.dbType);
+        .filter((f) => f[1]?.columnName || f[1]?.dbType || f[1]?.relationOnUpdate);
 
       return {
         ...modelDefinitions,
