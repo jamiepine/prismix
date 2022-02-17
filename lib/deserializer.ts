@@ -84,9 +84,11 @@ function renderIdFieldsOrPrimaryKey(idFields: string[]): string {
   if (!idFields) return ''; // <- this is a hotfix until it can be looked into
   return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
 }
-function renderUniqueFields(uniqueFields: string[][]): string[] {
-  return uniqueFields.length > 0
-    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`)
+function renderUniqueIndexes(uniqueIndexes: Model['uniqueIndexes']): string[] {
+  return uniqueIndexes.length > 0
+    ? uniqueIndexes.map(
+        ({ name, fields }) => `@@unique([${fields.join(', ')}]${name ? `, name: "${name}"` : ''})`
+      )
     : [];
 }
 function renderDbName(dbName: string | null): string {
@@ -119,10 +121,10 @@ function renderBlock(type: string, name: string, things: string[]): string {
 }
 
 function deserializeModel(model: Model): string {
-  const { name, fields, uniqueFields, dbName, idFields, primaryKey, doubleAtIndexes } = model;
+  const { name, fields, dbName, idFields, primaryKey, doubleAtIndexes, uniqueIndexes } = model;
   return renderBlock('model', name, [
     ...renderModelFields(fields),
-    ...renderUniqueFields(uniqueFields),
+    ...renderUniqueIndexes(uniqueIndexes),
     ...(doubleAtIndexes ?? []),
     renderDbName(dbName),
     renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
