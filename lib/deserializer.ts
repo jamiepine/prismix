@@ -33,7 +33,7 @@ const renderAttribute = (field: Field) => {
 
 // Render a line of field attributes
 function renderAttributes(field: DMMF.Field): string {
-  const { relationFromFields, relationToFields, relationName, kind } = field;
+  const { relationFromFields, relationToFields, relationName, kind, relationOnDelete } = field;
   // handle attributes for scalar and enum fields
   if (kind == 'scalar' || kind == 'enum') {
     return `${Object.keys(field)
@@ -48,8 +48,11 @@ function renderAttributes(field: DMMF.Field): string {
   }
   // handle relation syntax
   if (relationFromFields && kind === 'object') {
+    if (relationFromFields.length > 0) console.log(field);
     return relationFromFields.length > 0
-      ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}])`
+      ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}]${
+          relationOnDelete ? `onDelete: ${relationOnDelete}` : ''
+        })`
       : `@relation(name: "${relationName}")`;
   }
   return '';
