@@ -19,7 +19,11 @@ const renderAttribute = (field: Field) => {
       // if number, string or boolean we are ready to return!
       if (valueIs(value, [Number, String, Boolean]) || kind === 'enum') return `@default(${value})`;
       // haven't yet found where this is actually useful — will get back on that
-      if (typeof value === 'object') return `@default(${value.name}(${value.args}))`;
+      if (typeof value === 'object') {
+        // @default(dbgenerated("next_id()")) render to be @default(dbgenerated(next_id())), it cause error
+        if (value.name === 'dbgenerated') return `@default(${value.name}("${value.args}"))`
+        return `@default(${value.name}(${value.args}))`;
+      }
 
       throw new Error(`Prismix: Unsupported field attribute ${value}`);
     },
