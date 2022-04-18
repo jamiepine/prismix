@@ -10,6 +10,7 @@ import {
 } from './deserializer';
 import { DataSource, DMMF, GeneratorConfig } from '@prisma/generator-helper/dist';
 import glob from 'glob';
+import { CustomAttributes, Field, Model } from './dmmf-extension';
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -34,10 +35,28 @@ async function getSchema(schemaPath: string) {
     });
 
     const dmmf = await getDMMF({ datamodel: schema });
+    const customAttributes = getCustomAttributes(schema);
+    const models: Model[] = dmmf.datamodel.models.map((model: Model) => ({
+      ...model,
+      doubleAtIndexes: customAttributes[model.name]?.doubleAtIndexes,
+      fields: model.fields.map((field) =>
+        // Inject columnName and db.Type from the parsed fieldMappings above
+        {
+          const attributes = customAttributes[model.name]?.fields[field.name] ?? {};
+
+          return {
+            ...field,
+            columnName: attributes.columnName,
+            dbType: attributes.dbType,
+            relationOnUpdate: attributes.relationOnUpdate
+          };
+        }
+      )
+    }));
     const config = await getConfig({ datamodel: schema });
 
     return {
-      models: dmmf.datamodel.models as DMMF.Model[],
+      models,
       enums: dmmf.datamodel.enums,
       datasources: config.datasources,
       generators: config.generators
@@ -50,11 +69,10 @@ async function getSchema(schemaPath: string) {
   }
 }
 
-function mixModels(inputModels: DMMF.Model[]) {
-  const models: Record<string, DMMF.Model> = {};
+function mixModels(inputModels: Model[]) {
+  const models: Record<string, Model> = {};
   for (const newModel of inputModels) {
-    const existingModel: DMMF.Model | null = models[newModel.name];
-
+    const existingModel: Model | null = models[newModel.name];
     // if the model already exists in our found models, merge the fields
     if (existingModel) {
       const existingFieldNames = existingModel.fields.map((f) => f.name);
@@ -62,6 +80,19 @@ function mixModels(inputModels: DMMF.Model[]) {
         // if this field exists in the existing model
         if (existingFieldNames.includes(newField.name)) {
           const existingFieldIndex: number = existingFieldNames.indexOf(newField.name);
+
+          // Assign columnName (@map) based on existing field if found
+          const existingField: Field = existingModel.fields[existingFieldIndex];
+          if (!newField.columnName && existingField.columnName) {
+            newField.columnName = existingField.columnName;
+          }
+
+          // Assign defaults based on existing field if found
+          if (!newField.hasDefaultValue && existingField.hasDefaultValue) {
+            newField.hasDefaultValue = true;
+            newField.default = existingField.default;
+          }
+
           // replace the field at this index with the new one
           existingModel.fields[existingFieldIndex] = newField;
         } else {
@@ -69,11 +100,82 @@ function mixModels(inputModels: DMMF.Model[]) {
           existingModel.fields.push(newField);
         }
       }
+      // Assign dbName (@@map) based on new model if found
+      if (!existingModel.dbName && newModel.dbName) {
+        existingModel.dbName = newModel.dbName;
+      }
+
+      // Merge doubleAtIndexes (@@index) based on new model if found
+      if (newModel.doubleAtIndexes?.length) {
+        existingModel.doubleAtIndexes = [
+          ...(existingModel.doubleAtIndexes ?? []),
+          ...newModel.doubleAtIndexes
+        ];
+      }
+
+      // Merge unique indexes (@@unique) based on new model if found
+      if (newModel.uniqueIndexes?.length) {
+        existingModel.uniqueIndexes = [
+          ...(existingModel.uniqueIndexes ?? []),
+          ...newModel.uniqueIndexes
+        ];
+        existingModel.uniqueFields = [
+          ...(existingModel.uniqueFields ?? []),
+          ...newModel.uniqueFields
+        ];
+      }
     } else {
       models[newModel.name] = newModel;
     }
   }
   return Object.values(models);
+}
+
+// Extract @map attributes, which aren't accessible from the prisma SDK
+// Adapted from https://github.com/sabinadams/aurora/commit/acb020d868f2ba16b114cf084b959b65d0294a73#diff-8f1b0a136f29e1af67b019f53772aa2e80bf4d24e2c8b844cfa993d8cc9df789
+function getCustomAttributes(datamodel: string) {
+  // Split the schema up by the ending of each block and then keep each starting with 'model'
+  // This should essentially give us an array of the model blocks
+  const modelChunks = datamodel.split('\n}');
+  return modelChunks.reduce(
+    (modelDefinitions: Record<string, CustomAttributes>, modelChunk: string) => {
+      // Split the model chunk by line to get the individual fields
+      let pieces = modelChunk.split('\n').filter((chunk) => chunk.trim().length);
+      // Pull out model name
+      const modelName = pieces.find((name) => name.match(/model (.*) {/))?.split(' ')[1];
+      if (!modelName) return modelDefinitions;
+      // Regex for getting our @map attribute
+      const mapRegex = new RegExp(/[^@]@map\("(?<name>.*)"\)/);
+      const dbRegex = new RegExp(/(?<type>@db\.(.*)\))/);
+      const relationOnUpdateRegex = new RegExp(
+        /onUpdate: (?<op>Cascade|NoAction|Restrict|SetDefault|SetNull)/
+      );
+      const doubleAtIndexRegex = new RegExp(/(?<index>@@index\(.*\))/);
+      const doubleAtIndexes = pieces
+        .reduce((ac: string[], field) => {
+          const item = field.match(doubleAtIndexRegex)?.groups?.index;
+          return item ? [...ac, item] : ac;
+        }, [])
+        .filter((f) => f);
+      const fieldsWithCustomAttributes = pieces
+        .map((field) => {
+          const columnName = field.match(mapRegex)?.groups?.name;
+          const dbType = field.match(dbRegex)?.groups?.type;
+          const relationOnUpdate = field.match(relationOnUpdateRegex)?.groups?.op;
+          return [field.trim().split(' ')[0], { columnName, dbType, relationOnUpdate }] as [
+            string,
+            CustomAttributes['fields'][0]
+          ];
+        })
+        .filter((f) => f[1]?.columnName || f[1]?.dbType || f[1]?.relationOnUpdate);
+
+      return {
+        ...modelDefinitions,
+        [modelName]: { fields: Object.fromEntries(fieldsWithCustomAttributes), doubleAtIndexes }
+      };
+    },
+    {}
+  );
 }
 
 export async function prismix(options: PrismixOptions) {
@@ -89,7 +191,7 @@ export async function prismix(options: PrismixOptions) {
     }
 
     // extract all models and mix
-    let models: DMMF.Model[] = [];
+    let models: Model[] = [];
     for (const schema of schemasToMix) models = [...models, ...schema.models];
     models = mixModels(models);
 

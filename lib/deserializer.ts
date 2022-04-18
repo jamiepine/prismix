@@ -1,14 +1,15 @@
 import {
   ConnectorType,
   DataSource,
-  DMMF,
   EnvValue,
+  DMMF,
   GeneratorConfig
 } from '@prisma/generator-helper/dist';
+import { Field, Model } from './dmmf-extension';
 import { valueIs } from './utils';
 
 // Render an individual field attribute
-const renderAttribute = (field: DMMF.Field) => {
+const renderAttribute = (field: Field) => {
   const { kind, type } = field;
   return {
     default: (value: any) => {
@@ -25,13 +26,21 @@ const renderAttribute = (field: DMMF.Field) => {
     isId: (value: any) => (value ? '@id' : ''),
     isUnique: (value: any) => (value ? '@unique' : ''),
     isUpdatedAt: (value: any) => (value ? '@updatedAt' : ''),
-    columnName: (value: any) => (value ? `@map("${value}")` : '')
+    columnName: (value: any) => (value ? `@map("${value}")` : ''),
+    dbType: (value: any) => value ?? ''
   };
 };
 
 // Render a line of field attributes
 function renderAttributes(field: DMMF.Field): string {
-  const { relationFromFields, relationToFields, relationName, kind } = field;
+  const {
+    relationFromFields,
+    relationToFields,
+    relationName,
+    kind,
+    relationOnDelete,
+    relationOnUpdate
+  } = field;
   // handle attributes for scalar and enum fields
   if (kind == 'scalar' || kind == 'enum') {
     return `${Object.keys(field)
@@ -47,7 +56,9 @@ function renderAttributes(field: DMMF.Field): string {
   // handle relation syntax
   if (relationFromFields && kind === 'object') {
     return relationFromFields.length > 0
-      ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}])`
+      ? `@relation(name: "${relationName}", fields: [${relationFromFields}], references: [${relationToFields}]${
+          relationOnDelete ? `, onDelete: ${relationOnDelete}` : ''
+        }${relationOnUpdate ? `, onUpdate: ${relationOnUpdate}` : ''})`
       : `@relation(name: "${relationName}")`;
   }
   return '';
@@ -73,7 +84,7 @@ function renderModelFields(fields: DMMF.Field[]): string[] {
 
     if (kind == 'scalar')
       return `${renderDocumentation(documentation, true)}${name} ${type}${
-        isRequired ? '' : '?'
+        isList ? '[]' : isRequired ? '' : '?'
       } ${renderAttributes(field)}`;
 
     if (kind == 'object' || kind == 'enum')
@@ -90,9 +101,11 @@ function renderIdFieldsOrPrimaryKey(idFields: string[]): string {
   if (!idFields) return ''; // <- this is a hotfix until it can be looked into
   return idFields.length > 0 ? `@@id([${idFields.join(', ')}])` : '';
 }
-function renderUniqueFields(uniqueFields: string[][]): string[] {
-  return uniqueFields.length > 0
-    ? uniqueFields.map((eachUniqueField) => `@@unique([${eachUniqueField.join(', ')}])`)
+function renderUniqueIndexes(uniqueIndexes: Model['uniqueIndexes']): string[] {
+  return uniqueIndexes.length > 0
+    ? uniqueIndexes.map(
+        ({ name, fields }) => `@@unique([${fields.join(', ')}]${name ? `, name: "${name}"` : ''})`
+      )
     : [];
 }
 function renderDbName(dbName: string | null): string {
@@ -125,13 +138,14 @@ function renderBlock(type: string, name: string, things: string[], documentation
 }
 
 function deserializeModel(model: DMMF.Model): string {
-  const { name, fields, uniqueFields, dbName, idFields, primaryKey, documentation } = model;
+  const { name, fields, dbName, idFields, primaryKey, doubleAtIndexes, uniqueIndexes, documentation } = model;
   return renderBlock(
     'model',
     name,
     [
       ...renderModelFields(fields),
-      ...renderUniqueFields(uniqueFields),
+      ...renderUniqueIndexes(uniqueIndexes),
+      ...(doubleAtIndexes ?? []),
       renderDbName(dbName),
       renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
     ],
@@ -164,7 +178,7 @@ function deserializeEnum({ name, values, dbName, documentation }: DMMF.Datamodel
 }
 
 // Exportable methods
-export async function deserializeModels(models: DMMF.Model[]) {
+export async function deserializeModels(models: Model[]) {
   return models.map((model) => deserializeModel(model)).join('\n');
 }
 export async function deserializeDatasources(datasources: DataSource[]) {

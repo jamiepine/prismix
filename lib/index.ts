@@ -9,6 +9,8 @@ dotenv.config();
 
 const readJsonFile = promisify(jsonfile.readFile);
 
+const args = process.argv.slice(2);
+
 class Prismix extends Command {
   static description =
     'Allows you to have multiple Prisma schema files with shared model relations.';
@@ -23,7 +25,7 @@ class Prismix extends Command {
     // const { flags } = this.parse(Prismix)
 
     const options: PrismixOptions = (await readJsonFile(
-      path.join(process.cwd(), 'prismix.config.json')
+      path.join(process.cwd(), args[0] || 'prismix.config.json')
     )) as PrismixOptions;
 
     for (const mixer of options.mixers) {
