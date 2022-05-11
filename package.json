@@ -18,7 +18,7 @@
   "repository": "https://github.com/jamiepine/prismix",
   "private": false,
   "scripts": {
-    "prepack": "tsc -b",
+    "prepare": "tsc -b",
     "dev": "tsc-watch",
     "build": "tsc"
   },
