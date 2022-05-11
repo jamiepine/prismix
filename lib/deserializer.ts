@@ -141,7 +141,7 @@ function deserializeGenerator(generator: GeneratorConfig): string {
   return renderBlock('generator', name, [
     renderProvider(provider.value),
     renderOutput(output?.value || null),
-    renderBinaryTargets(binaryTargets as unknown as string[]),
+    renderBinaryTargets(binaryTargets.map(({ value }) => value) as unknown as string[]),
     renderPreviewFeatures(previewFeatures)
   ]);
 }
