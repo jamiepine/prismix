@@ -146,7 +146,7 @@ function getCustomAttributes(datamodel: string) {
       if (!modelName) return modelDefinitions;
       // Regex for getting our @map attribute
       const mapRegex = new RegExp(/[^@]@map\("(?<name>.*)"\)/);
-      const dbRegex = new RegExp(/(?<type>@db\.(.*)\))/);
+      const dbRegex = new RegExp(/(?<type>@db\.(.[^\s@]*))/);
       const relationOnUpdateRegex = new RegExp(
         /onUpdate: (?<op>Cascade|NoAction|Restrict|SetDefault|SetNull)/
       );
