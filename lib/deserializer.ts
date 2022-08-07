@@ -64,16 +64,33 @@ function renderAttributes(field: DMMF.Field): string {
   return '';
 }
 
+// Render all documentation lines
+function renderDocumentation(documentation?: string, tab?: boolean) {
+  if (!documentation) return '';
+
+  const documentationLines = documentation.split('\n');
+
+  return documentationLines.length == 1
+    ? `/// ${documentationLines[0]}\n${tab ? '\t' : ''}`
+    : documentationLines
+        .map((text, idx) => (idx == 0 ? `/// ${text}` : `\t/// ${text}`))
+        .join('\n') + (tab ? '\n\t' : '\n');
+}
+
 // render all fields present on a model
 function renderModelFields(fields: DMMF.Field[]): string[] {
   return fields.map((field) => {
-    const { name, kind, type, isRequired, isList } = field;
+    const { name, kind, type, documentation, isRequired, isList } = field;
 
     if (kind == 'scalar')
-      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(field)}`;
+      return `${renderDocumentation(documentation, true)}${name} ${type}${
+        isList ? '[]' : isRequired ? '' : '?'
+      } ${renderAttributes(field)}`;
 
     if (kind == 'object' || kind == 'enum')
-      return `${name} ${type}${isList ? '[]' : isRequired ? '' : '?'} ${renderAttributes(field)}`;
+      return `${renderDocumentation(documentation, true)}${name} ${type}${
+        isList ? '[]' : isRequired ? '' : '?'
+      } ${renderAttributes(field)}`;
 
     throw new Error(`Prismix: Unsupported field kind "${kind}"`);
   });
@@ -113,22 +130,27 @@ function renderPreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures
 }
 
 // This function will render a code block with suitable indenting
-function renderBlock(type: string, name: string, things: string[]): string {
-  return `${type} ${name} {\n${things
+function renderBlock(type: string, name: string, things: string[], documentation?: string): string {
+  return `${renderDocumentation(documentation)}${type} ${name} {\n${things
     .filter((thing) => thing.length > 1)
     .map((thing) => `\t${thing}`)
     .join('\n')}\n}`;
 }
 
-function deserializeModel(model: Model): string {
-  const { name, fields, dbName, idFields, primaryKey, doubleAtIndexes, uniqueIndexes } = model;
-  return renderBlock('model', name, [
-    ...renderModelFields(fields),
-    ...renderUniqueIndexes(uniqueIndexes),
-    ...(doubleAtIndexes ?? []),
-    renderDbName(dbName),
-    renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
-  ]);
+function deserializeModel(model: DMMF.Model): string {
+  const { name, fields, dbName, idFields, primaryKey, doubleAtIndexes, uniqueIndexes, documentation } = model;
+  return renderBlock(
+    'model',
+    name,
+    [
+      ...renderModelFields(fields),
+      ...renderUniqueIndexes(uniqueIndexes),
+      ...(doubleAtIndexes ?? []),
+      renderDbName(dbName),
+      renderIdFieldsOrPrimaryKey(idFields || primaryKey?.fields)
+    ],
+    documentation
+  );
 }
 
 function deserializeDatasource(datasource: DataSource): string {
@@ -146,13 +168,13 @@ function deserializeGenerator(generator: GeneratorConfig): string {
   ]);
 }
 
-function deserializeEnum({ name, values, dbName }: DMMF.DatamodelEnum) {
+function deserializeEnum({ name, values, dbName, documentation }: DMMF.DatamodelEnum) {
   const outputValues = values.map(({ name, dbName }) => {
     let result = name;
     if (name !== dbName && dbName) result += `@map("${dbName}")`;
     return result;
   });
-  return renderBlock('enum', name, [...outputValues, renderDbName(dbName || null)]);
+  return renderBlock('enum', name, [...outputValues, renderDbName(dbName || null)], documentation);
 }
 
 // Exportable methods
