@@ -104,7 +104,7 @@ We've established our `generator` and `datasource`, as well as our first model, 
 Now we'll create the Posts schema in a different file. In order for posts to relate to accounts we can define an **empty model** to represent the account.
 
 ```prisma
-model Posts {
+model Post {
     id         Int     @id @default(autoincrement())
     title      String
     content    String
@@ -115,7 +115,7 @@ model Posts {
 }
 
 model Account {
-    id     String @id
+    id     Int @id
     posts  Post[]
 }
 ```
