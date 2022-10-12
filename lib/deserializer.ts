@@ -136,7 +136,7 @@ function renderPreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures
 // This function will render a code block with suitable indenting
 function renderBlock(type: string, name: string, things: string[], documentation?: string): string {
   return `${renderDocumentation(documentation)}${type} ${name} {\n${things
-    .filter((thing) => thing.length > 1)
+    .filter((thing) => thing.length > 0)
     .map((thing) => `\t${thing}`)
     .join('\n')}\n}`;
 }
