@@ -21,7 +21,7 @@
     "prepack": "tsc -b",
     "dev": "tsc-watch",
     "build": "tsc",
-    "postinstall": "npm run build"
+    "prepublish": "npm run build"
   },
   "engines": {
     "node": ">=8.0.0"
