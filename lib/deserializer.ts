@@ -3,7 +3,8 @@ import {
   DataSource,
   EnvValue,
   DMMF,
-  GeneratorConfig
+  GeneratorConfig,
+  BinaryTargetsEnvValue
 } from '@prisma/generator-helper/dist';
 import { Field, Model } from './dmmf-extension';
 import { valueIs } from './utils';
@@ -126,8 +127,8 @@ function renderProvider(provider: ConnectorType | string): string {
 function renderOutput(path: string | null): string {
   return path ? `output = "${path}"` : '';
 }
-function renderBinaryTargets(binaryTargets?: string[]): string {
-  return binaryTargets?.length ? `binaryTargets = ${JSON.stringify(binaryTargets)}` : '';
+function renderBinaryTargets(binaryTargets?: BinaryTargetsEnvValue[]): string {
+  return binaryTargets?.length ? `binaryTargets = ${JSON.stringify(binaryTargets.map(binaryTarget => binaryTarget.value))}` : '';
 }
 function renderPreviewFeatures(previewFeatures: GeneratorConfig['previewFeatures']): string {
   return previewFeatures.length ? `previewFeatures = ${JSON.stringify(previewFeatures)}` : '';
@@ -167,7 +168,7 @@ function deserializeGenerator(generator: GeneratorConfig): string {
   return renderBlock('generator', name, [
     renderProvider(provider.value),
     renderOutput(output?.value || null),
-    renderBinaryTargets(binaryTargets as unknown as string[]),
+    renderBinaryTargets(binaryTargets),
     renderPreviewFeatures(previewFeatures)
   ]);
 }
